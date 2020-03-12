@@ -1,179 +1,93 @@
-var http = require('http');
 var fs = require('fs');
 var url=require('url');
-var qs=require('querystring');
-function templateHTML(title,list,body,control){
-  return `<!doctype html>
-  <html>
-  <head>
-    <title>WEB1 - ${title}</title>
-    <meta charset="utf-8">
-  </head>
-  <body>
-    <h1><a href="/">${title}</a></h1>
-${list}
-${control}
-${body}
-  </body>
-  </html>
+var http=require('http');
 
-`;
+function descripti(param){
+  var desc=``;
+  if(param==='html'){
+    desc=`html 입니다`;
+  }else if(param==='js'){
+    desc=`js 입니다`;
+  }else if(param==='react'){
+    desc=`react 입니다`;
+  }else{
+    desc='welcome 입니다';
+  }
+  return desc;
 }
-function templateList(filelist){
-  var list='<ul>';
-  var i=0;
-  while(true){
-  list=list+`<li><a href="/?id=${filelist[i]}">${filelist[i]}</a></li>`;
-  i++;
-  if(i>=filelist.length){
+
+function crud(){
+
+var v=`<ol>
+<li><a href="/create">create</a></li>
+<li><a href="/update">update</a></li>
+<li><a href="/delete">delete</a></li>
+</ol>`
+return v;
+
+}
+function dircome(){
+  list=`<ul>`;
+  var file=fs.readdir(`./data`,'utf8',function(err,data){
+console.log(data);
+    for(i=0;i<data.length;i++)
+  {
+list=list+`<li><a href="/${data[i]}">${data[i]}</a></li>`;
+}list=list+`</ul>`;
+});
+console.log(list);
+return list;
+
+}
+function crudfom(pathname){
+  var result;
+  switch (pathname) {
+    case '/create':result=`<form action='/c'><input type="text" action='/c'><input type="submit">
+    </form>`;
+      break;
+      case '/delete':result=`<form><input type="text" action='/d'><input type="submit">
+      </form>`;
+      break;
+      case '/update':result=`<form><input type="text" action='/u'><input type="submit">
+      </form>`;
+      break;
+    default:
     break;
   }
-  }
-  list=list+'</ul>';
-  return list;
+return result;
 }
+
 var app = http.createServer(function(request,response){
-    var _url = request.url;
-    var queryData=url.parse(_url,true).query;
-    var title=queryData.id;
-    var pathname=url.parse(_url,true).pathname;
-    console.log(pathname);
-if(pathname==='/'){
-  if(queryData.id===undefined){
-    fs.readdir('./data',function(error,filelist){
-console.log(filelist);
-var title='Welcome';
-var description='Hello, node.js';
-var list=templateList(filelist);
-     var template=templateHTML(title,list,`
-       <h2>${title}</h2>  <h3>  ${description}</h3>`,
-       `<a href="/create">create</a>`
-    );
+var _url=request.url;
+var queryData=url.parse(_url,true).query;
+var pathname=url.parse(_url,true).pathname;
+console.log(queryData);
+
 response.writeHead(200);
-response.end(template);
-    })
-}else{
-  fs.readdir('./data',function(error,filelist){
-console.log(filelist);
-
-   fs.readFile(`data/${queryData.id}`,'utf8',function(err,description){
-     title=queryData.id;
-
-     var list=templateList(filelist);
-     var template=templateHTML(title,list,
-       ` <h2>${title}</h2>  <h3>  ${description}</h3>`,
-       `<a href="/create">create</a>
-       <a href="/update?id=${title}">update</a>
-       <form action="/delete_process" method="post">
-       <input type="hidden" name='id' value="${title}">
-       <input type="submit" value="delete">
-       </form>`
-     );
-     response.writeHead(200);
-  response.end(template);
-});
-});
-}
-}else if(pathname ==='/create'){
-  fs.readdir('./data',function(error,filelist){
-console.log(filelist);
-var title='web -create';
-var list=templateList(filelist);
-   var template=templateHTML(title,list,`
-     <h2>${title}</h2> <form action =
-     "/create_process" method="post">
-     <input type="text" name ="title">
-    <br> <textarea name="description"></textarea>
-    <br><input type="submit"></form>`,'');
-response.writeHead(200);
-response.end(template);
-})
-
-}else if(pathname==='/create_process'){
-  var body = '';
-     request.on('data', function(data){
-         body = body + data;
-     });
-     request.on('end', function(){
-         var post = qs.parse(body);
-         var title = post.title;
-         var description = post.description;
-         fs.writeFile(`data/${title}`,description,'utf8',function(){
-           response.writeHead(302,{Location:`/?id=${title}`});// 페이지 이동
-           response.end('success');
-         });
-         console.log(post);
-     });
+if(pathname=='/c'){
 
 }
-else if (pathname==='/update'){
 
-  fs.readdir('./data',function(error,filelist){
-console.log(filelist);
+var ol=dircome();
 
-   fs.readFile(`data/${queryData.id}`,'utf8',function(err,description){
-     title=queryData.id;
+var des=descripti(queryData.id);
 
-     var list=templateList(filelist);
-     var template=templateHTML(title,list,
-       `
-       <form action =
-       "/update_process" method="post">
+var fom=crud();
+var tfom=crudfom(pathname);
 
-       <input type="hidden" name ="id" value=${title}>
+var temp=`
+<html>
+<head>  <meta charset="utf-8"></head>
+${ol}<br>
+${des}<br>
+${fom}
+${tfom}
+</html>`;
+console.log(pathname);
+console.log(queryData.id);
 
-       <input type="text" name ="title" value=${title}>
-       <br> <textarea name="description">${description}</textarea>
-       <br><input type="submit"></form>
-
-       `,
-       `<a href="/create">create</a>
-       <a href="/update?id=${title}">update</a>`);
-     response.writeHead(200);
-  response.end(template);
-});
-});
-
-}else if(pathname==='/update_process'){
-  var body = '';
-     request.on('data', function(data){
-         body = body + data;
-     });
-     request.on('end', function(){
-         var post = qs.parse(body);
-         var id=post.id;
-         var title = post.title;
-         var description = post.description;
+  response.end(temp);
 
 
-         fs.rename(`data/${id}`,`data/${title}`,function(error){
-           fs.writeFile(`data/${title}`,description,'utf8',function(){
-              response.writeHead(302,{Location:`/?id=${title}`});// 페이지 이동
-              response.end('success');})
-         })
-         console.log(post);
-     });
-}
-else if(pathname==='/delete_process'){
-
-  var body = '';
-     request.on('data', function(data){
-         body = body + data;
-     });
-     request.on('end', function(){
-         var post = qs.parse(body);
-         var id=post.id;
-         fs.unlink(`data/${id}`,function(error){
-           response.writeHead(302,{Location:`/`});
-           response.end();
-         })
-       });
-
-
-     }
-else{
-  response.writeHead(404);
-response.end("not found");
-}
 });
 app.listen(3000);
